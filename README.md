@@ -1,8 +1,15 @@
-[![Build Status](https://travis-ci.org/nginx-proxy/docker-letsencrypt-nginx-proxy-companion.svg?branch=master)](https://travis-ci.org/nginx-proxy/docker-letsencrypt-nginx-proxy-companion)
-[![GitHub release](https://img.shields.io/github/release/jrcs/docker-letsencrypt-nginx-proxy-companion.svg)](https://github.com/JrCs/docker-letsencrypt-nginx-proxy-companion/releases)
-[![Image info](https://images.microbadger.com/badges/image/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![Docker stars](https://img.shields.io/docker/stars/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
-[![Docker pulls](https://img.shields.io/docker/pulls/jrcs/letsencrypt-nginx-proxy-companion.svg)](https://hub.docker.com/r/jrcs/letsencrypt-nginx-proxy-companion "Click to view the image on Docker Hub")
+# (Fork)Change Log
+- Use certbot + CloudDNS
+
+# (Fork)Require
+- Create dns-google-credentials file and volume mount on `/root/.secrets/certbot/google.json` when starting container.
+
+# (Fork)References
+- [ECSで動いているIP制限ありのサービスをLet's EncryptでSSL化 - miyasakura’s diary](https://miyasakura.hatenablog.com/entry/2019/08/09/001343)
+- [Welcome to certbot-dns-google’s documentation! — certbot-dns-google 0 documentation](https://certbot-dns-google.readthedocs.io/en/stable/)
+
+
+# ↓Following is the original↓
 
 **letsencrypt-nginx-proxy-companion** is a lightweight companion container for [**nginx-proxy**](https://github.com/jwilder/nginx-proxy).
 

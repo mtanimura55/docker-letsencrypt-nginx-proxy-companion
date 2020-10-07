@@ -32,17 +32,14 @@ RUN apk add --update \
         curl \
         jq \
         openssl \
+        certbot \
+        python3 \
     && rm /var/cache/apk/*
 
 # Install docker-gen from build stage
 COPY --from=go-builder /go/src/github.com/jwilder/docker-gen/docker-gen /usr/local/bin/
 
-# Install simp_le
-COPY /install_simp_le.sh /app/install_simp_le.sh
-RUN chmod +rx /app/install_simp_le.sh \
-    && sync \
-    && /app/install_simp_le.sh \
-    && rm -f /app/install_simp_le.sh
+RUN pip3 install certbot-dns-clouddns
 
 COPY /app/ /app/
 

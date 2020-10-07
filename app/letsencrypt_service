@@ -201,8 +201,7 @@ function update_certs {
         fi
 
         [[ "$DEBUG" == true ]] && params_d_arr+=(-v)
-        [[ $REUSE_PRIVATE_KEYS == true ]] && params_d_arr+=(--reuse_key)
-        
+
         min_validity="LETSENCRYPT_${cid}_MIN_VALIDITY"
         min_validity="${!min_validity:-"<no value>"}"
         if [[ "$min_validity" == "<no value>" ]]; then
@@ -216,13 +215,6 @@ function update_certs {
         # Lower Bound
         if [[ $min_validity -lt $((seconds_to_wait * 2)) ]]; then
             min_validity=$((seconds_to_wait * 2))
-        fi
-
-        if [[ "${1}" == "--force-renew" ]]; then
-            # Manually set to highest certificate lifetime given by LE CA
-            params_d_arr+=(--valid_min 7776000)
-        else
-            params_d_arr+=(--valid_min "$min_validity")
         fi
 
         # Create directory for the first domain,
@@ -268,15 +260,13 @@ function update_certs {
         fi
 
         echo "Creating/renewal $base_domain certificates... (${hosts_array_expanded[*]})"
-        /usr/bin/simp_le \
-            -f account_key.json -f account_reg.json \
-            -f key.pem -f chain.pem -f fullchain.pem -f cert.pem \
+        certbot certonly --dns-google \
+            --dns-google-credentials /root/.secrets/certbot/google.json \
             "${params_d_arr[@]}" \
-            --cert_key_size="$cert_keysize" \
-            --server="$acme_ca_uri" \
-            --default_root /usr/share/nginx/html/
+            -n \
+            --agree-tos
 
-        simp_le_return=$?
+        certbot_return=$?
 
         if [[ $REUSE_ACCOUNT_KEYS == true ]]; then
             mkdir -p "$account_dir"
@@ -294,36 +284,11 @@ function update_certs {
 
         popd || return
 
-        if [[ $simp_le_return -ne 2 ]]; then
-          for domain in "${!hosts_array}"; do
-            if [[ "$acme_ca_uri" == "$le_staging_uri" ]]; then
-              create_links "_test_$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
-            else
-              create_links "$base_domain" "$domain" && should_reload_nginx='true' && should_restart_container='true'
-            fi
-          done
-          touch "${certificate_dir}/.companion"
-          # Set ownership and permissions of the files inside $certificate_dir
-          for file in .companion cert.pem key.pem chain.pem fullchain.pem account_key.json account_reg.json; do
-            file_path="${certificate_dir}/${file}"
-            [[ -e "$file_path" ]] && set_ownership_and_permissions "$file_path"
-          done
-          account_path="/etc/nginx/certs/accounts/${acme_ca_uri#*://}"
-          account_key_perm_path="${account_path}/${account_alias}_key.json"
-          account_reg_perm_path="${account_path}/${account_alias}_reg.json"
-          # Account key and registration files do not necessarily exists after
-          # simp_le exit code 1. Check if they exist before perm check (#591).
-          [[ -f "$account_key_perm_path" ]] && set_ownership_and_permissions "$account_key_perm_path"
-          [[ -f "$account_reg_perm_path" ]] && set_ownership_and_permissions "$account_reg_perm_path"
-          # Set ownership and permissions of the ACME account folder and its
-          # parent folders (up to /etc/nginx/certs/accounts included)
-          until [[ "$account_path" == /etc/nginx/certs ]]; do
-            set_ownership_and_permissions "$account_path"
-            account_path="$(dirname "$account_path")"
-          done
-          # Queue nginx reload if a certificate was issued or renewed
-          [[ $simp_le_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
-        fi
+        [[ $certbot_return -eq 0 ]] && should_reload_nginx='true' && should_restart_container='true'
+        for domain in "${!hosts_array}"; do
+            cp -p /etc/letsencrypt/live/${domain}/fullchain.pem /etc/nginx/certs/${domain}.crt
+            cp -p /etc/letsencrypt/live/${domain}/privkey.pem /etc/nginx/certs/${domain}.key
+        done
 
         # Restart container if certs are updated and the respective environmental variable is set
         restart_container_var="LETSENCRYPT_${cid}_RESTART_CONTAINER"
