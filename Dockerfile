@@ -27,19 +27,24 @@ ENV DEBUG=false \
 # Install packages required by the image
 RUN apk add --update \
         bash \
+        gcc \
         ca-certificates \
         coreutils \
         curl \
         jq \
         openssl \
-        certbot \
+        libressl-dev\
+        build-base \
+        libffi-dev \
         python3 \
+        python3-dev \
     && rm /var/cache/apk/*
 
 # Install docker-gen from build stage
 COPY --from=go-builder /go/src/github.com/jwilder/docker-gen/docker-gen /usr/local/bin/
 
-RUN pip3 install certbot-dns-clouddns
+RUN pip3 install setuptools==45
+RUN pip3 install certbot-dns-google
 
 COPY /app/ /app/
 
