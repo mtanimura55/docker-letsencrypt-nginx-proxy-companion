@@ -35,17 +35,17 @@ services:
 
   lets-encrypt:
     container_name: sample-lets-encrypt
-    image:
+    build: .
     restart: always
     environment:
       # Find nginx proxy container.
-      - NGINX_PROXY_CONTAINER=sonarqube-nginx
-      - NGINX_DOCKER_GEN_CONTAINER=sonarqube-nginx
+      - NGINX_PROXY_CONTAINER=sample-nginx
+      - NGINX_DOCKER_GEN_CONTAINER=sample-nginx
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       # Please set google.json for dns admin service account
       # Ref. https://cloud.google.com/iam/docs/creating-managing-service-accounts?hl=en
-      - ./google.json:/root/.secrets/certbot/google.json:r
+      - ./google.json:/root/.secrets/certbot/google.json
       - letsencrypt-pem:/etc/letsencrypt:rw
       - nginx-certs:/etc/nginx/certs:rw
       - nginx-vhost:/etc/nginx/vhost.d
